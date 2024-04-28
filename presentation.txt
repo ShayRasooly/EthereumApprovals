@@ -1,0 +1,24 @@
+1) ive read the documentation, about blockchain tokens and about ECR20.
+2) approval is one of the ECR20 events. Approve: Allows a spender to withdraw a set number of tokens from a specified account, up to a specific amount
+3) Transfer: Automatically executes transfers of a specified number of tokens to a specified address for transactions using the token
+4) TransferFrom: Automatically executes transfers of a specified number of tokens from a specified address using the token
+5) started coding. First thing, register to infura, and test their api with "request"
+6) read about eth_getLogs. Without parameters, it will return all transactions from the last call. This is why I added the block args to make the tests more consistent.
+7) read about the logs, now I need to filter only the approval events.
+8) argparse
+8) tried to fetch all events and then see what field is the type. After research, I understood that the first topic is the type, therefore it can be passed as filter to eth_getLogs.
+9) i've read in the documentation that the amount of approval is the data in hexa. So just needed to decode it to decimal.
+10) now I need to get the token. after I understand it doesn't exist in the log, I looked for another function in infura, i didn't find any, but I found w3 function that gives you contract details, so i refactored the code to work with w3 instead of infura requests, and made second api request to get the token from the event address.
+12) installation og w3 was a bit annoying, required crypto library that required visualstudio building tool.
+11) now when I have the spender and the token, I can write the mechanic to make sure that only the latest from the same spender and token is used. The most runtime friendly and elegant way to do that that i found is using dictionary.
+12) this function requires ABI, looked for ECR20 ABI, found one on GitHub, and downloaded it, but if there is a change, there is also reading directly from the remote repository
+13) extension 1.
+14) downloaded fastapi and uvicorn and created server and function to make sure it works
+15) refactor code to be more modular in order to create a second input and output format without code duplications
+16) prettify (a very tiny bit) the output and make sure good flow works
+17) looking in etherscan for different examples to make sure the code works with them as well
+18) extension 2.
+19) created api key (in the end, it wasn't necessary).
+20) fetching example and also fetching the currencies' list to see if it should be an argument and what is the format.
+21) added currency argument to the cli and the web interface, as well as "get_rate" function
+22) added checks for api rate and token availability
