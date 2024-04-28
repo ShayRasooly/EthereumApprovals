@@ -2,7 +2,7 @@ import argparse
 import json
 from hexbytes import HexBytes
 from web3 import Web3
-
+import requests
 import uvicorn
 from fastapi import FastAPI
 
@@ -26,6 +26,7 @@ def parse_args():
     parser.add_argument('-b', '--block', help='specific block index to list', required=False)
     parser.add_argument('-f', '--fromBlock', help='specific block index to list from', required=False)
     parser.add_argument('-t', '--toBlock', help='specific block index to list from', required=False)
+    parser.add_argument('-c', '--currency', help='show price of the token in a specific currency, in 3-4 characters', required=False)
     return vars(parser.parse_args())
 
 
@@ -54,25 +55,49 @@ def get_token(w3, event_log):
     return contract.functions.name().call()
 
 
+def get_token_rate(token, currency):
+    url = 'https://api.coingecko.com/api/v3/simple/price'
+    params = {
+        'ids': token,
+        'vs_currencies': currency
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        response = response.json()
+        if response:
+            return response.json()[token][currency]
+
+
+
 def get_approvals_list_by_address(args):
     url = f'https://mainnet.infura.io/v3/{API_KEY}'
     w3 = Web3(Web3.HTTPProvider(url))
     filter_dict = get_filter_dict_from_args(args)
     approvals_log_entries = w3.eth.filter(filter_dict).get_all_entries()
+    currency = args["currency"]
     out_list = []
 
     for log_entry in approvals_log_entries:
         if args["address"] == get_owner_address(log_entry):
             amount = int.from_bytes(log_entry["data"])
             token = get_token(w3, log_entry)
-            out_list.append(f"approval on {token} on amount of {amount}")
+            entry_str = f"approval on {token} on amount of {amount}"
+            if currency:
+                rate = get_token_rate(token.lower(), currency.lower())
+                if rate:
+                    entry_str += f"\nThe rate of {token} is {rate} {currency}. the approval is on the amount of {rate*amount} {currency}"
+                else:
+                    entry_str += f"\nThe rate of {token} is not available in {currency}"
+            out_list.append(entry_str)
     return out_list
 
 
 @app.get('/approvals/{owner_address}')
 async def get_approvals_list(owner_address: str, block: str | None = None, fromBlock: str | None = None,
-                             toBlock: str | None = None):
-    args = {"address": HexBytes(owner_address), "block": block, "fromBlock": fromBlock, "toBlock": toBlock}
+                             toBlock: str | None = None, currency: str | None = None):
+    args = {"address": HexBytes(owner_address), "block": block, "fromBlock": fromBlock, "toBlock": toBlock,
+            "currency": currency}
     approvals = get_approvals_list_by_address(args)
     return {i: approval for i, approval in enumerate(approvals)}
 
@@ -89,3 +114,7 @@ if __name__ == "__main__":
     if args["server"]:
         uvicorn.run("get_approvals_list:app", host="127.0.0.1", port=8000, reload=True, access_log=False)
     print_approvals(args)
+
+
+# http://localhost:8000/approvals/0x000000000000000000000000E518dB7B39eeAbF7705f93cD9EF8a7dB4a51a943?block=19746581
+# {'status': {'error_code': 429, 'error_message': "You've exceeded the Rate Limit. Please visit https://www.coingecko.com/en/api/pricing to subscribe to our API plans for higher rate limits."}}
