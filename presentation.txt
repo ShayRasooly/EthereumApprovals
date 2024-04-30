@@ -22,3 +22,14 @@
 20) fetching example and also fetching the currencies' list to see if it should be an argument and what is the format.
 21) added currency argument to the cli and the web interface, as well as "get_rate" function
 22) added checks for api rate and token availability
+23) find how to fetch account balance with W3
+24) find out it needs differnt size account id than eth_logs, write a function to convert between those lengths
+25) find out it gives you the balance in wei. write function to convert it to currency
+26) add arg for the currency even though in the exercise it say only usd
+27) add exposure calculation function, and add line to the output
+28) realise it might take a lot of identical calls to rate api, adding cache
+29) test
+
+
+web address for tests:
+http://localhost:8000/approvals/0x000000000000000000000000E518dB7B39eeAbF7705f93cD9EF8a7dB4a51a943?block=19746581&currency=ILS
